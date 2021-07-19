@@ -2,7 +2,7 @@
 
 namespace nathanwooten\Where;
 
-//v2.0.12
+//v2.0.13
 
 class Where
 {
@@ -11,7 +11,7 @@ class Where
 
 	const OR = [ 'OR', 'or', '||' ];
 
-	public function process( array $where, $bind = '?', bool $internalArray = null, array $internalParameters = [] )
+	public function process( array $where, bool $internalArray = null, array $internalParameters = [] )
 	{
 
 		$originalWhere = $where;
@@ -20,7 +20,7 @@ class Where
 
 			if ( is_array( $item ) ) {
 
-				$parsed = $this->process( $item, $bind, true, $internalParameters );
+				$parsed = $this->process( $item, true, $internalParameters );
 
 				$item = $parsed[ 0 ];
 				$internalParameters = $parsed[ 1 ];
@@ -68,52 +68,6 @@ class Where
 						$whereBind = '?';
 						$key = count( $internalParameters );
 
-/*
-						} else {
-							$id = '';
-							if ( in_array( $name, $internalParameters ) ) {
-
-								$last = substr( $name, strlen( $name ) -1, 1 );
-								if ( is_numeric( $last ) ) {
-
-									foreach ( str_split( $string ) as $char ) {
-
-										$isNumeric = is_numeric( $char );
-										$isDot = ( '.' === $char );
-
-										if ( ! $isNumeric && ! $isDot ) {
-											if ( ! empty( $id ) ) {
-												throw new Exception( 'Letters in the version exception' );
-											}
-										} elseif ( $isNumeric || $isDot ) {
-											$id .= $char;
-										}
-									}
-
-									$previousVersion = $name . $id;
-									$internalParameters[ $previousVersion ] = $internalParameters[ $name ];
-
-
-									$key = $name . ++$id;
-
-								} else {
-									$previous = $name;
-									$previousVersion = $name . '1';
-									$internalParameters[ $previousVersion ] = $internalParameters[ $previous ];
-
-									$version = '2';
-									$whereBind = ':' . $name . $version;
-									$key = $name . $version;
-
-									unset( $internalParameters[ $name ] );
-								}
-							} else {
-
-								$whereBind = ':' . $name . $id;
-								$key = $name;
-							}
-						}
-
 						$where[ $index ] = $whereBind;
 						$internalParameters[ $key ] = $item;
 					}
@@ -132,5 +86,5 @@ class Where
 		return $returnValues;
 
 	}
-*/
+
 }
