@@ -1,11 +1,15 @@
 <?php
 
-//2.0.7
+//v2.0.8
 
 function where( array $where, $bind = '?', bool $internalArray = null, array $internalParameters = [] )
 {
 
-	$separators = [ 'AND', 'OR', 'and', 'or', '&&', '||' ];
+	global $mysqlFunctions;
+
+	$internalMysqlFunctions = $mysqlFunctions;
+	$internalSeparators = [ 'AND', 'OR', 'and', 'or', '&&', '||' ];
+	$internalComparison = [ '=', '!=', '>', '<', '>=', '<=', '|' ];
 	$internalInner = empty( $internalArray ) ? false : true;
 
 	foreach ( $where as $index => $item ) {
@@ -19,58 +23,64 @@ function where( array $where, $bind = '?', bool $internalArray = null, array $in
 			if ( $internalPrevious >= 0 ) {
 				$internalPrevious = trim( $where[ $internalPrevious ] );
 
-				if ( is_string( $internalPrevious ) && ! in_array( $internalPrevious, $separators ) ) {
+				if ( is_string( $internalPrevious ) && ! in_array( $internalPrevious, $internalSeparators ) ) {
 					$item = ' and ' . $item;
 				}
 
 			}
 
-// 			if ( ! $internalInner ) {
-//			} else {
+			if ( $index == 0 && ( true === $internalArray || ! in_array( $item, $internalSeparators ) ) ) {
+				$item = ' ( ' . $item;
+			}
 
-				if ( $index == 0 && ( true === $internalArray || ! in_array( $item, $separators ) ) ) {
-					$item = ' ( ' . $item;
-				}
-
-				if ( $index === count( $where ) -1 ) {
-					$item .= ' ) ';
-				}
-//			}
+			if ( $index === count( $where ) -1 ) {
+				$item .= ' ) ';
+			}
 
 			$where[ $index ] = $item;
 
-			$array = true;
+			$internalArray = true;
 
 		} else {
 
-			$array = false;
- 
-			if ( in_array ( $item, $separators ) ) {
+			if ( in_array ( $item, $internalSeparators ) ) {
 				$where[ $index ] = ' ' . $item . ' ';
 
-			} elseif ( $index == 0 ) {
-				$where[ $index ] = '`' . trim( $item, '`') . '`';
+			} else {
 
-			} elseif ( $index == 1 ) {
-				$where[$index] = ' ' . $item . ' ';
+				if ( $index == 0 ) {
+					$where[ $index ] = $item;
 
-			} elseif ( $index == 2 ) {
+				} elseif ( $index == 1 ) {
+					if ( '!' === $where[ 0 ] ) {
+						$where[ $index ] = $item;
+					} elseif( in_array( $where[ 0 ], $internalMysqlFunctions ) ) {
+						$where[ $index ] = $item;
+					}
 
-				$name = trim( $where[ 0 ], '`' );
+					$where[$index] = ' ' . $item . ' ';
 
-				if ( '?' === $bind ) {
-					$whereBind = '?';
-					$key = count( $internalParameters );
+				} elseif ( $index == 2 ) {
 
-				} else {
-					$whereBind = $name;
-					$key = $name;
+					$name = $where[ 0 ];
 
+					if ( '?' === $bind ) {
+						$whereBind = '?';
+						$key = count( $internalParameters );
+
+					} else {
+						$whereBind = $name;
+						$key = $name;
+
+					}
+
+					$where[ $index ] = $whereBind;
+					$parameters[ $key ] = $item;
 				}
-
-				$where[ $index ] = $whereBind;
-				$parameters[ $key ] = $item;
 			}
+
+			$internalArray = false;
+
 		}
 	}
 
