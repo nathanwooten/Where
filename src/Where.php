@@ -1,38 +1,51 @@
 <?php
 
-//v2.0.4
+//v2.0.6
 
 class Where
 {
 
-//$where = [ [ 'title', '=', 'MyPage' ], [ [ 'content', '=', 'MyPage' ], 'or', [ 'content', '=', 'YourPage' ] ] ];
-// first iteration: array [ 'title', '=', 'MyPage' ]
-// 2: string title
-// 3: string =
-// 4: string MyPage
-// 5: array [ [ 'content', '=', 'MyPage' ], 'or', [ 'content', '=', 'YourPage' ] ] ]
-// 6: array [ 'content', '=', 'MyPage' ]
-// 7: string content
-// 8: string =
-// 9: string MyPage
-//10: string or
-//11: array [ 'content', '=', 'YourPage' ]
-//12: string content
-//13: string =
-//14: string YourPage
+	public $input = null;
+	public $output = [];
 
-	function parse( array $where, $bind, bool $array = null, array $parameters = [] )
+	public function __construct()
+	{
+
+		$input = func_get_args();
+		if ( ! empty( $input ) ) {
+			$this( $input );
+		}
+
+	}
+
+	public function __invoke()
+	{
+
+		$output = $this->create( ...func_get_args() );
+		return $ouput;
+
+	}
+
+	function create( array $where, $bind = '?', bool $internalArray = null, array $internalParameters = [] )
 	{
 
 		$separators = [ 'AND', 'OR', 'and', 'or', '&&', '||' ];
 
-		$inner = empty( $array ) ? false : true;
+		if ( empty( $array ) ) {
+			$original = $where;
+
+			$inner = false;
+		} else {
+			$inner = true;
+		}
+
+		$internalInner = empty( $internalArray ) ? false : true;
 
 		foreach ( $where as $index => $item ) {
 
 			if ( is_array( $item ) ) {
 
-				$parsed = $this->parse( $item, $bind, $array, $parameters );
+				$parsed = $this->create( $item, $bind, $array, $internalParameters );
 				$item = $parsed[0];
 
 				$previous = 0 > $index -1 ? null : $index -1;
@@ -48,7 +61,7 @@ class Where
 				if ( ! $inner ) {
 				} else {
 
-					if ( $index == 0 && true === $array ) {
+					if ( $index == 0 && ( true === $array || ! in_array( $item, $separators ) ) ) {
 						$item = ' ( ' . $item;
 					}
 
@@ -76,13 +89,20 @@ class Where
 
 				} elseif ( $index == 2 ) {
 
-					$name = trim( $where[ 0 ] );
+					$name = trim( $where[ 0 ], '`' );
 
 					if ( '?' === $bind ) {
 						$whereBind = '?';
 						$key = count( $parameters );
 
 					} else {
+/*
+						if ( 'add' === $bind ) {
+							if ( array_key_exists( $key, $parameters ) ) {
+								if ( 
+							}
+						}
+*//*
 						$whereBind = $name;
 						$key = $name;
 
@@ -96,8 +116,34 @@ class Where
 
 		$expressions = implode( '', $where );
 
+		if ( false === $inner ) {
+			$expressions = trim( $expressions );
+		}
+
+		$parameters = $internalParameters;
+
 		$returnValues = [ $expressions, $parameters ];
+
+		if ( false === $internaliInner ) {
+			$this->result = $returnValues;
+			$this->orginal = $original;
+		}
+
 		return $returnValues;
+
+	}
+
+	public function getInput()
+	{
+
+		return $this->input;
+
+	}
+
+	public function getOutput()
+	{
+
+		return $this->output;
 
 	}
 
