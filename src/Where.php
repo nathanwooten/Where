@@ -2,7 +2,7 @@
 
 namespace nathanwooten\Where;
 
-//v2.0.10
+//v2.0.11
 
 class Where
 {
@@ -10,8 +10,6 @@ class Where
 	const AND = [ 'AND', 'and', '&&' ];
 
 	const OR = [ 'OR', 'or', '||' ];
-
-	const OPERATORS = [ '&', '>', '>>', '>=', '<', '<>', '!=', '<<', '<=', '<=>', '%', 'MOD', '*', '+', '-', '->', '->>', '/', ':=', '=', '^', 'AND', '&&', 'BETWEEN', 'BINARY', 'CASE', 'DIV', 'IN', 'IS', 'IS NOT', 'IS NOT NULL', 'IS NULL', 'LIKE', 'NOT', 'NOT BETWEEN', 'NOT IN', 'NOT LIKE', 'NOT REGEXP', 'OR', '||', 'REGEXP', 'RLIKE', 'SOUNDS LIKE', 'XOR', '|', '~' ];
 
 	public function process( array $where, $bind = '?', bool $internalArray = null, array $internalParameters = [] )
 	{
@@ -75,7 +73,7 @@ class Where
 							$id = '';
 							if ( in_array( $name, $internalParameters ) ) {
 
-								if ( is_numeric( substr( $name, strlen( $name ) -1, 1 ) ) {
+								if ( is_numeric( substr( $name, strlen( $name ) -1, 1 ) ) ) {
 									foreach ( str_split( $string ) as $char ) {
 
 										$isNumeric = is_numeric( $char );
@@ -89,14 +87,19 @@ class Where
 											$id .= $char;
 										}
 									}
-								}
+								} else {
 
+
+
+								}
 
 								if ( empty( $id ) ) {
 									$id = 0;
 								}
-
 								$id++;
+
+								
+
 							}
 
 							$whereBind = ':' . $name . $id;
