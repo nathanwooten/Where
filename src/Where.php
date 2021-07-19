@@ -1,150 +1,88 @@
 <?php
 
-//v2.0.6
+//2.0.7
 
-class Where
+function where( array $where, $bind = '?', bool $internalArray = null, array $internalParameters = [] )
 {
 
-	public $input = null;
-	public $output = [];
+	$separators = [ 'AND', 'OR', 'and', 'or', '&&', '||' ];
+	$internalInner = empty( $internalArray ) ? false : true;
 
-	public function __construct()
-	{
+	foreach ( $where as $index => $item ) {
 
-		$input = func_get_args();
-		if ( ! empty( $input ) ) {
-			$this( $input );
-		}
+		if ( is_array( $item ) ) {
 
-	}
+			$parsed = where( $item, $bind, true, $internalParameters );
+			$item = $parsed[0];
 
-	public function __invoke()
-	{
+			$internalPrevious = 0 > $index -1 ? -1 : $index -1;
+			if ( $internalPrevious >= 0 ) {
+				$internalPrevious = trim( $where[ $internalPrevious ] );
 
-		$output = $this->create( ...func_get_args() );
-		return $ouput;
+				if ( is_string( $internalPrevious ) && ! in_array( $internalPrevious, $separators ) ) {
+					$item = ' and ' . $item;
+				}
 
-	}
+			}
 
-	function create( array $where, $bind = '?', bool $internalArray = null, array $internalParameters = [] )
-	{
+// 			if ( ! $internalInner ) {
+//			} else {
 
-		$separators = [ 'AND', 'OR', 'and', 'or', '&&', '||' ];
+				if ( $index == 0 && ( true === $internalArray || ! in_array( $item, $separators ) ) ) {
+					$item = ' ( ' . $item;
+				}
 
-		if ( empty( $array ) ) {
-			$original = $where;
+				if ( $index === count( $where ) -1 ) {
+					$item .= ' ) ';
+				}
+//			}
 
-			$inner = false;
+			$where[ $index ] = $item;
+
+			$array = true;
+
 		} else {
-			$inner = true;
-		}
 
-		$internalInner = empty( $internalArray ) ? false : true;
+			$array = false;
+ 
+			if ( in_array ( $item, $separators ) ) {
+				$where[ $index ] = ' ' . $item . ' ';
 
-		foreach ( $where as $index => $item ) {
+			} elseif ( $index == 0 ) {
+				$where[ $index ] = '`' . trim( $item, '`') . '`';
 
-			if ( is_array( $item ) ) {
+			} elseif ( $index == 1 ) {
+				$where[$index] = ' ' . $item . ' ';
 
-				$parsed = $this->create( $item, $bind, $array, $internalParameters );
-				$item = $parsed[0];
+			} elseif ( $index == 2 ) {
 
-				$previous = 0 > $index -1 ? null : $index -1;
-				if ( $previous || 0 === $previous ) {
-					$previous = trim( $where[ $previous ] );
+				$name = trim( $where[ 0 ], '`' );
 
-					if ( is_string( $previous ) && ! in_array( $previous, $separators ) ) {
-						$item = ' and' . $item;
-					}
+				if ( '?' === $bind ) {
+					$whereBind = '?';
+					$key = count( $internalParameters );
 
-				}
-
-				if ( ! $inner ) {
 				} else {
+					$whereBind = $name;
+					$key = $name;
 
-					if ( $index == 0 && ( true === $array || ! in_array( $item, $separators ) ) ) {
-						$item = ' ( ' . $item;
-					}
-
-					if ( $index === count( $where ) -1 ) {
-						$item .= ' ) ';
-					}
 				}
 
-				$where[ $index ] = $item;
-
-				$array = true;
-
-			} else {
-
-				$array = false;
-
-				if ( in_array ( $item, $separators ) ) {
-					$where[ $index ] = ' ' . $item . ' ';
-
-				} elseif ( $index == 0 ) {
-					$where[ $index ] = '`' . trim( $item, '`') . '`';
-
-				} elseif ( $index == 1 ) {
-					$where[$index] = ' ' . $item . ' ';
-
-				} elseif ( $index == 2 ) {
-
-					$name = trim( $where[ 0 ], '`' );
-
-					if ( '?' === $bind ) {
-						$whereBind = '?';
-						$key = count( $parameters );
-
-					} else {
-/*
-						if ( 'add' === $bind ) {
-							if ( array_key_exists( $key, $parameters ) ) {
-								if ( 
-							}
-						}
-*//*
-						$whereBind = $name;
-						$key = $name;
-
-					}
-
-					$where[ $index ] = $whereBind;
-					$parameters[ $key ] = $item;
-				}
+				$where[ $index ] = $whereBind;
+				$parameters[ $key ] = $item;
 			}
 		}
-
-		$expressions = implode( '', $where );
-
-		if ( false === $inner ) {
-			$expressions = trim( $expressions );
-		}
-
-		$parameters = $internalParameters;
-
-		$returnValues = [ $expressions, $parameters ];
-
-		if ( false === $internaliInner ) {
-			$this->result = $returnValues;
-			$this->orginal = $original;
-		}
-
-		return $returnValues;
-
 	}
 
-	public function getInput()
-	{
+	$expressions = implode( '', $where );
 
-		return $this->input;
-
+	if ( false === $internalInner ) {
+		$expressions = trim( $expressions );
 	}
 
-	public function getOutput()
-	{
+	$parameters = $internalParameters;
 
-		return $this->output;
-
-	}
+	$returnValues = [ $expressions, $parameters ];
+	return $returnValues;
 
 }
