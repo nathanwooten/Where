@@ -1,6 +1,6 @@
 <?php
 
-//v.2.0.1
+//v2.0.2
 
 class Where
 {
@@ -45,9 +45,6 @@ class Where
 				} elseif ( $index == 2 ) {
 
 					$where[ $index ] = '?';
-
-					$parameters[] = $item;
-
 				}
 			}
 		}
