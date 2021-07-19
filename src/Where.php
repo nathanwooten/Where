@@ -1,96 +1,69 @@
 <?php
 
-namespace profordable\framework\database;
+//v2.0.0
 
-use profordable\framework\database\pf_database_item as database_item;
+class Where
+{
 
-class pf_model_expressions extends database_item {
+	function parse( array $where, $bind, array $array = [], array $parameters = [] )
+	{
 
-	const SEPARATORS = [
-		'AND',
-		'OR'
-	];
+		$inner = empty( $array ) ? false : true;
 
-	public $bindings = [];
-
-	public function __construct($container = null) {
-		$this->init($container);
-	}
-
-	public function init($container = null) {
-		$set = isset($container);
-		$prepared = $set ? (($p = $container->get('prepared')) ? $p : true) : true;
-		$bind_type = $set ? (($b = $container->get('bind_type')) ? $b : '?') : '?';
-		$container = isset($container) ? $container : new p_container;
-		$container->set('prepared', $prepared);
-		$container->set('bind_type', $bind_type);
-		$this->container_init($container);
-	}
-
-	public function build(array $parts = null) {
-		if (!isset($parts) || empty($parts) || !$parts) {
-			return false;
-		}
-		$prepared = isset($container) && ($prepared = $container->get('prepared')) ? $prepared : true;
-		$bind_type = isset($cotainer) && ($bind_type = $container->get('bind_type')) ? $bind_type : '?';
-		$inner = false;
-		$backtrace = debug_backtrace();
-		$inner = (isset($backtrace[1]) && $backtrace[1]['function'] == 'build' && $backtrace[1]['class'] == get_class($this)) ? true : false;
 		$array = [];
-		foreach ($parts as $index => $part) {
-			if (is_array($part)) {
-				$array[$index] = true;
-				$part = $this->build($part);
+		foreach ( $where as $index => $item ) {
+
+			if ( is_array( $item ) ) {
+
+				$array[ $index ] = true;
+
+				$parsed = $this->parse( $item, $bind, $array, $parameters );
+				$item = $parsed[0];
+
 				$previous = $index - 1;
-				if (isset($parts[$previous]) && $array[$previous] == true) {
-					$part = ' AND ' . $part;
+				if ( $previous > -1 ) {
+					if ( isset( $where[ $previous ] ) /*&& true === $array[ $previous ] *//* ) {
+						$item = ' and ' . $item;
+					}
 				}
-				if ($index == 0 && $inner) {
-					$part = '(' . $part;
+
+				if ( $index == 0 && $inner ) {
+					$item = ' ( ' . $item;
 				}
-				if ($index == count($parts) - 1 && $inner) {
-					$part .= ')';
+
+				if ( $index === count( $where ) -1 && $inner ) {
+					$item .= ' ) ';
 				}
-				$parts[$index] = $part;
+
+				$where[ $index ] = $item;
+
 			} else {
-				$array[$index] = false;
-				if (in_array($part, self::SEPARATORS)) {
-					$parts[$index] = ' ' . $part . ' ';
-				} elseif ($index == 0) {
-					$parts[$index] = '`' . trim($part, '`') . '`';
-				} elseif ($index == 1) {
-					$parts[$index] = ' ' . $part . ' ';
-				} elseif ($index == 2) {
-					if ($bind_type == '?') {
-						if (empty($this->bindings)) {
-							$this->bindings[1] = $part;
-						}
-					} else {
-						$this->bindings[$parts[0]] = $part;
-					}
-					if ($prepared) {
-						if (!isset($bind_type)) {
-							$bind_type = '?';
-						}
-						$parts[$index] = ($bind_type === '?') ? '?' : ':' . trim($parts[0], '`');
-					} else {
-						if (!is_numeric($part)) {
-							$parts[$index] = "'" . $part . "'";
-						} else {
-							$parts[$index] = $part;
-						}
-					}
+
+				$array[ $index ] = false;
+
+				if ( in_array ( $item, [ 'AND', 'OR', 'and', 'or', '&&', '||' ] ) ) {
+					$where[ $index ] = ' ' . $item . ' ';
+
+				} elseif ( $index == 0 ) {
+					$where[ $index ] = '`' . trim( $item, '`') . '`';
+
+				} elseif ( $index == 1 ) {
+					$where[$index] = ' ' . $item . ' ';
+
+				} elseif ( $index == 2 ) {
+
+					$where[ $index ] = '?';
+					$parameters[] = $item;
+
 				}
 			}
 		}
-		$expressions = implode('', $parts);
-		return $expressions;
-	}
 
-	public function get_bindings() {
-		return $this->bindings;
+		$expressions = implode( '', $where );
+
+		$returnValues = [ $expressions, $parameters ];
+		return $returnValues;
+
 	}
 
 }
-
-?>
