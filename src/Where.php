@@ -1,89 +1,125 @@
 <?php
 
-//v2.0.9
+namespace nathanwooten\Where;
 
-function where( array $where, $bind = '?', bool $internalArray = null, array $internalParameters = [] )
+//v2.0.10
+
+class Where
 {
 
-	$internalSeparators = [ 'AND', 'OR', 'and', 'or', '&&', '||' ];
-	$internalComparison = [ '=', '!=', '>', '<', '>=', '<=' ];
-	$internalInner = empty( $internalArray ) ? false : true;
+	const AND = [ 'AND', 'and', '&&' ];
 
-	foreach ( $where as $index => $item ) {
+	const OR = [ 'OR', 'or', '||' ];
 
-		if ( is_array( $item ) ) {
+	const OPERATORS = [ '&', '>', '>>', '>=', '<', '<>', '!=', '<<', '<=', '<=>', '%', 'MOD', '*', '+', '-', '->', '->>', '/', ':=', '=', '^', 'AND', '&&', 'BETWEEN', 'BINARY', 'CASE', 'DIV', 'IN', 'IS', 'IS NOT', 'IS NOT NULL', 'IS NULL', 'LIKE', 'NOT', 'NOT BETWEEN', 'NOT IN', 'NOT LIKE', 'NOT REGEXP', 'OR', '||', 'REGEXP', 'RLIKE', 'SOUNDS LIKE', 'XOR', '|', '~' ];
 
-			$parsed = where( $item, $bind, true, $internalParameters );
-			$item = $parsed[0];
+	public function process( array $where, $bind = '?', bool $internalArray = null, array $internalParameters = [] )
+	{
 
-			$internalPrevious = 0 > $index -1 ? -1 : $index -1;
-			if ( $internalPrevious >= 0 ) {
-				$internalPrevious = trim( $where[ $internalPrevious ] );
+		$originalWhere = $where;
 
-				if ( is_string( $internalPrevious ) && ! in_array( $internalPrevious, $internalSeparators ) ) {
-					$item = ' and ' . $item;
+		foreach ( $where as $index => $item ) {
+
+			if ( is_array( $item ) ) {
+
+				$parsed = $this->process( $item, $bind, true, $internalParameters );
+
+				$item = $parsed[ 0 ];
+				$internalParameters = $parsed[ 1 ];
+
+				$internalPrevious = 0 > $index -1 ? -1 : $index -1;
+				if ( $internalPrevious >= 0 ) {
+					$internalPrevious = trim( $where[ $internalPrevious ] );
+
+					if ( is_string( $internalPrevious ) && ! in_array( $internalPrevious, self::AND ) && ! in_array( $internalPrevious, self::OR ) ) {
+						$item = ' and ' . $item;
+					}
+
 				}
 
-			}
+				if ( $index == 0 && ( true === $internalArray || ( ! in_array( $item, self::AND ) && ! in_array( $item, self::OR ) ) ) ) {
+					$item = '( ' . $item;
 
-			if ( $index == 0 && ( true === $internalArray || ! in_array( $item, $internalSeparators ) ) ) {
-				$item = ' ( ' . $item;
-			}
+				}
 
-			if ( $index === count( $where ) -1 ) {
-				$item .= ' ) ';
-			}
+				if ( $index === count( $where ) -1 ) {
+					$item .= ' )';
+				}
 
-			$where[ $index ] = $item;
+				$where[ $index ] = $item;
 
-			$internalArray = true;
-
-		} else {
-
-			if ( in_array ( $item, $internalSeparators ) ) {
-				$where[ $index ] = ' ' . $item . ' ';
+				$internalArray = true;
 
 			} else {
 
-				if ( $index == 0 ) {
-					$where[ $index ] = $item;
+				if ( in_array ( $item, self::AND ) || in_array( $item, self::OR ) ) {
+					$where[ $index ] = ' ' . $item . ' ';
 
-				} elseif ( $index == 1 ) {
-					$where[ $index ] = $item;
+				} else {
 
-				} elseif ( $index == 2 ) {
+					if ( $index == 0 ) {
+						$where[ $index ] = $item;
 
-					$name = $where[ 0 ];
+					} elseif ( $index == 1 ) {
+						$where[ $index ] = $item;
 
-					if ( '?' === $bind ) {
-						$whereBind = '?';
-						$key = count( $internalParameters );
+					} elseif ( $index == 2 ) {
 
-					} else {
-						$whereBind = ':' . $name;
-						$key = $name;
+						$name = $where[ 0 ];
 
+						if ( '?' === $bind ) {
+							$whereBind = '?';
+							$key = count( $internalParameters );
+
+						} else {
+							$id = '';
+							if ( in_array( $name, $internalParameters ) ) {
+
+								if ( is_numeric( substr( $name, strlen( $name ) -1, 1 ) ) {
+									foreach ( str_split( $string ) as $char ) {
+
+										$isNumeric = is_numeric( $char );
+										$isDot = ( '.' === $char );
+
+										if ( ! $isNumeric && ! $isDot ) {
+											if ( ! empty( $id ) ) {
+												throw new Exception( 'Letters in the version exception' );
+											}
+										} elseif ( $isNumeric || $isDot ) {
+											$id .= $char;
+										}
+									}
+								}
+
+
+								if ( empty( $id ) ) {
+									$id = 0;
+								}
+
+								$id++;
+							}
+
+							$whereBind = ':' . $name . $id;
+							$key = $name;
+						}
+
+						$where[ $index ] = $whereBind;
+						$internalParameters[ $key ] = $item;
 					}
-
-					$where[ $index ] = $whereBind;
-					$internalParameters[ $key ] = $item;
 				}
+
+				$internalArray = false;
+
 			}
-
-			$internalArray = false;
-
 		}
+
+		$expressions = implode( '', $where );
+		$parameters = $internalParameters;
+		$original = $originalWhere;
+
+		$returnValues = [ $expressions, $parameters, $original ];
+		return $returnValues;
+
 	}
-
-	$expressions = implode( '', $where );
-
-	if ( false === $internalInner ) {
-		$expressions = trim( $expressions );
-	}
-
-	$parameters = $internalParameters;
-
-	$returnValues = [ $expressions, $parameters ];
-	return $returnValues;
 
 }
