@@ -1,33 +1,23 @@
 <?php
 
-//v2.0.0
+//v.2.0.1
 
 class Where
 {
 
-	function parse( array $where, $bind, array $array = [], array $parameters = [] )
+	function parse( array $where, $bind, bool $array = null, array $parameters = [] )
 	{
 
 		$inner = empty( $array ) ? false : true;
 
-		$array = [];
 		foreach ( $where as $index => $item ) {
 
 			if ( is_array( $item ) ) {
 
-				$array[ $index ] = true;
-
 				$parsed = $this->parse( $item, $bind, $array, $parameters );
 				$item = $parsed[0];
 
-				$previous = $index - 1;
-				if ( $previous > -1 ) {
-					if ( isset( $where[ $previous ] ) /*&& true === $array[ $previous ] *//* ) {
-						$item = ' and ' . $item;
-					}
-				}
-
-				if ( $index == 0 && $inner ) {
+				if ( $index == 0 && $inner && true === $array ) {
 					$item = ' ( ' . $item;
 				}
 
@@ -37,9 +27,11 @@ class Where
 
 				$where[ $index ] = $item;
 
+				$array = true;
+
 			} else {
 
-				$array[ $index ] = false;
+				$array = false;
 
 				if ( in_array ( $item, [ 'AND', 'OR', 'and', 'or', '&&', '||' ] ) ) {
 					$where[ $index ] = ' ' . $item . ' ';
@@ -53,6 +45,7 @@ class Where
 				} elseif ( $index == 2 ) {
 
 					$where[ $index ] = '?';
+
 					$parameters[] = $item;
 
 				}
