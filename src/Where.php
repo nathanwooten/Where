@@ -2,7 +2,7 @@
 
 namespace nathanwooten\Where;
 
-//v2.0.11
+//v2.0.12
 
 class Where
 {
@@ -65,15 +65,17 @@ class Where
 
 						$name = $where[ 0 ];
 
-						if ( '?' === $bind ) {
-							$whereBind = '?';
-							$key = count( $internalParameters );
+						$whereBind = '?';
+						$key = count( $internalParameters );
 
+/*
 						} else {
 							$id = '';
 							if ( in_array( $name, $internalParameters ) ) {
 
-								if ( is_numeric( substr( $name, strlen( $name ) -1, 1 ) ) ) {
+								$last = substr( $name, strlen( $name ) -1, 1 );
+								if ( is_numeric( $last ) ) {
+
 									foreach ( str_split( $string ) as $char ) {
 
 										$isNumeric = is_numeric( $char );
@@ -87,23 +89,29 @@ class Where
 											$id .= $char;
 										}
 									}
+
+									$previousVersion = $name . $id;
+									$internalParameters[ $previousVersion ] = $internalParameters[ $name ];
+
+
+									$key = $name . ++$id;
+
 								} else {
+									$previous = $name;
+									$previousVersion = $name . '1';
+									$internalParameters[ $previousVersion ] = $internalParameters[ $previous ];
 
+									$version = '2';
+									$whereBind = ':' . $name . $version;
+									$key = $name . $version;
 
-
+									unset( $internalParameters[ $name ] );
 								}
+							} else {
 
-								if ( empty( $id ) ) {
-									$id = 0;
-								}
-								$id++;
-
-								
-
+								$whereBind = ':' . $name . $id;
+								$key = $name;
 							}
-
-							$whereBind = ':' . $name . $id;
-							$key = $name;
 						}
 
 						$where[ $index ] = $whereBind;
@@ -124,5 +132,5 @@ class Where
 		return $returnValues;
 
 	}
-
+*/
 }
