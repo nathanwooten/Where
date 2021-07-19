@@ -1,15 +1,12 @@
 <?php
 
-//v2.0.8
+//v2.0.9
 
 function where( array $where, $bind = '?', bool $internalArray = null, array $internalParameters = [] )
 {
 
-	global $mysqlFunctions;
-
-	$internalMysqlFunctions = $mysqlFunctions;
 	$internalSeparators = [ 'AND', 'OR', 'and', 'or', '&&', '||' ];
-	$internalComparison = [ '=', '!=', '>', '<', '>=', '<=', '|' ];
+	$internalComparison = [ '=', '!=', '>', '<', '>=', '<=' ];
 	$internalInner = empty( $internalArray ) ? false : true;
 
 	foreach ( $where as $index => $item ) {
@@ -52,13 +49,7 @@ function where( array $where, $bind = '?', bool $internalArray = null, array $in
 					$where[ $index ] = $item;
 
 				} elseif ( $index == 1 ) {
-					if ( '!' === $where[ 0 ] ) {
-						$where[ $index ] = $item;
-					} elseif( in_array( $where[ 0 ], $internalMysqlFunctions ) ) {
-						$where[ $index ] = $item;
-					}
-
-					$where[$index] = ' ' . $item . ' ';
+					$where[ $index ] = $item;
 
 				} elseif ( $index == 2 ) {
 
@@ -69,13 +60,13 @@ function where( array $where, $bind = '?', bool $internalArray = null, array $in
 						$key = count( $internalParameters );
 
 					} else {
-						$whereBind = $name;
+						$whereBind = ':' . $name;
 						$key = $name;
 
 					}
 
 					$where[ $index ] = $whereBind;
-					$parameters[ $key ] = $item;
+					$internalParameters[ $key ] = $item;
 				}
 			}
 
