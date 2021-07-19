@@ -22,7 +22,7 @@ Example:
 
 ```
 $parser = new Where;
-$parser->parse( [ [ 'title', '=', 'Home' ], 'or', [ [ 'id', '=', 1 ], 'or', [ 'id', '=', 2 ] ] ] );
+$parser->process( [ [ 'title', '=', 'Home' ], 'or', [ [ 'id', '=', 1 ], 'or', [ 'id', '=', 2 ] ] ] );
 
 //turns the above into
 
